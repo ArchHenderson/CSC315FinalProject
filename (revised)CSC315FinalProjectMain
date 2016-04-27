@@ -1,0 +1,113 @@
+/*
+ *CSC 315 Final Project
+ *Code Written by Arch Henderson III
+ *SQL statements done by Coldy Adams
+ */
+package csc315finalproject;
+
+import java.io.FileNotFoundException;
+import java.io.File;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Scanner;
+
+public class CSC315FinalProjectMain {
+
+    public static void main(String[] args) {
+        Connection connection = null;
+        ResultSet resultSet = null;
+        String url = "jdbc:mysql://localhost/airtravel";
+        Scanner scanner = new Scanner(System.in);
+        String user = null;
+        String password = null;
+        String tableStatement = "";
+        File file = null;
+        Statement statement = null;
+        int columnNum;
+
+//        if (args.length > 0) { // This is for running from the command line
+        file = new File("datafile.txt");
+        try {
+            while (connection == null) {
+                try {
+                    System.out.println("Enter username (ArchHenderson)");
+                    user = scanner.next();
+                    scanner.nextLine();
+                    System.out.println("Enter password (arch2325)");
+                    password = scanner.next();
+
+                    connection = DriverManager.getConnection(url, user, password);
+                    if (connection != null) {
+                        System.out.println("Connected to the database airtravel");
+                    }
+                    scanner.nextLine();
+
+                } catch (SQLException e) {
+                    System.out.println("Username or password incorrect");
+                    e.printStackTrace();
+                }
+            }
+            try {
+                statement = connection.createStatement();
+                statement.executeUpdate("set foreign_key_checks=0");
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+            } finally {
+                if (statement != null) {
+                    statement.close();
+                }
+            }
+
+            try {
+                scanner = new Scanner(file);
+                scanner.useDelimiter(";"); // Allows whole sql statments to be input from one data file
+
+                while (scanner.hasNext()) {
+                    tableStatement = scanner.next();
+                    System.out.println(tableStatement);
+
+                    try {
+                        statement = connection.createStatement();
+                        statement.executeUpdate(tableStatement);
+
+                        // An sql exception is created when running executeUpdate on a query
+                    } catch (SQLException e) {
+                        e.printStackTrace(); //Right now it never gets to the queries because something runs out of space
+                        try {
+                            resultSet = statement.executeQuery(tableStatement);
+                            columnNum = resultSet.getMetaData().getColumnCount();
+                            //prints query reults (I think)
+                            for (int i = 1; i <= columnNum; i++) {
+                                System.out.print(resultSet.getMetaData().getColumnName(i) + "\t");
+                            }
+                            System.out.println("");
+                            while (resultSet.next()) {
+                                for (int i = 1; i <= columnNum; i++) {
+                                    System.out.print(resultSet.getRowId(columnNum).toString() + "\t");
+                                }
+                                System.out.println("");
+                            }
+                        } catch (SQLException ex) {
+                            ex.printStackTrace();
+                        }
+                    } finally {
+                        if (statement != null) {
+                            statement.close();
+                        }
+                    }
+                }
+            } catch (FileNotFoundException e) {
+                System.out.println("file not found");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+//        } else {
+//            System.out.println("No data file given");
+//        }
+    }
+}
