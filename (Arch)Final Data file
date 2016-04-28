@@ -1,0 +1,385 @@
+CREATE TABLE Airport_T (
+    AirportCode CHAR(3) NOT NULL,
+    AirportName VARCHAR(255) NOT NULL,
+    AirportCity VARCHAR(255) NOT NULL,
+    AirportCountry VARCHAR(255) DEFAULT 'United States',
+    PhoneNumber INT,
+    PRIMARY KEY (AirportCode));
+
+CREATE TABLE AirlineCarrier_T (
+    AirlineName VARCHAR(255) NOT NULL,
+    AirlineCallSign VARCHAR(255),
+    AirlineStreet VARCHAR(255),
+    AirlineCity VARCHAR(255),
+    AirlineCountry VARCHAR(255),
+    PhoneNumber INT,
+    AirlineCode CHAR(3) NOT NULL UNIQUE,
+    PRIMARY KEY (AirlineName));
+
+CREATE TABLE FlightPath_T (
+    AirlineCode CHAR(3) NOT NULL,
+    FlightNumber INT(4) NOT NULL,
+    DepartAirport CHAR(3) NOT NULL,
+    ArriveAirport CHAR(3) NOT NULL,
+    CONSTRAINT FlightPath_PK PRIMARY KEY (AirlineCode , FlightNumber),
+    FOREIGN KEY (AirlineCode)
+        REFERENCES AirlineCarrier_T (AirlineCode),
+    FOREIGN KEY (DepartAirport)
+        REFERENCES Airport_T (AirportCode),
+    FOREIGN KEY (ArriveAirport)
+        REFERENCES Airport_T (AirportCode));
+
+CREATE TABLE Plane_T (
+    TailNumber VARCHAR(10) PRIMARY KEY,
+    PlaneModel VARCHAR(255) NOT NULL,
+    EngineType VARCHAR(255),
+    BusinessSeats INT(3) NOT NULL,
+    EconomySeats INT(4) NOT NULL);
+
+CREATE TABLE FlightInstance_T (
+    AirlineCode CHAR(3) NOT NULL,
+    FlightNumber INT(4) NOT NULL,
+    PlaneID VARCHAR(10) NOT NULL,
+    FlightDate DATE NOT NULL,
+    DepartTime TIME NOT NULL,
+    ArriveTime TIME NOT NULL,
+    TicketPriceFirst NUMERIC(6 , 2 ),
+    ticketPriceEcon NUMERIC(6 , 2 ),
+    ReservedEconomySeats INT DEFAULT 0,
+    ReservedBusinessSeats INT DEFAULT 0,
+    CONSTRAINT FlightInstance_PK PRIMARY KEY (AirlineCode , FlightNumber , FlightDate),
+    FOREIGN KEY (PlaneID)
+        REFERENCES Plane_T (TailNumber),
+    FOREIGN KEY (AirlineCode , FlightNumber)
+        REFERENCES FlightPath_T (AirlineCode , FlightNumber));
+
+CREATE TABLE Customer_T (
+    CustomerID INT NOT NULL AUTO_INCREMENT,
+    CustomerName VARCHAR(255) NOT NULL,
+    CustomerStreet VARCHAR(255) NOT NULL,
+    CustomerCity VARCHAR(255) NOT NULL,
+    CustomerCountry VARCHAR(255) DEFAULT 'United States',
+    PhoneNumber INT(9),
+    PRIMARY KEY (CustomerID));
+
+CREATE TABLE FrequentFlyerMembership_T (
+    CustomerID INT NOT NULL,
+    AirlineID char(3) NOT NULL,
+    Miles INT DEFAULT 0,
+    CONSTRAINT FFMembership_PK PRIMARY KEY (CustomerID , AirlineID),
+    FOREIGN KEY (CustomerID)
+        REFERENCES Customer_T (CustomerID),
+    FOREIGN KEY (AirlineID)
+        REFERENCES AirLineCarrier_T (AirlineCode));
+
+CREATE TABLE PaymentMethod_T (
+    CustomerID INT NOT NULL,
+    PaymentMethod VARCHAR(255) NOT NULL,
+    CardNumber BIGINT,
+    CONSTRAINT PaymentMethod_PK PRIMARY KEY (CustomerID , PaymentMethod),
+    FOREIGN KEY (CustomerID)
+        REFERENCES Customer_T (CustomerID));
+
+CREATE TABLE Preference_T (
+    CustomerID INT NOT NULL,
+    Preference VARCHAR(255) NOT NULL,
+    Details VARCHAR(255),
+    CONSTRAINT Preference_PK PRIMARY KEY (CustomerID , Preference),
+    FOREIGN KEY (CustomerID)
+        REFERENCES Customer_T (CustomerID));
+
+CREATE TABLE Reservation_T (
+    ReservationID INT NOT NULL AUTO_INCREMENT,
+    CustomerID INT NOT NULL,
+    PaymentMethod VARCHAR(255) REFERENCES PaymentMethod_T (PaymentMethod),
+    FFMembership VARCHAR(255) REFERENCES AirLine_T (AirlineName),
+    Preference VARCHAR(255) REFERENCES Preference_T (Preference),
+    TravelAgent VARCHAR(255),
+    Confirmed BOOLEAN,
+    PRIMARY KEY (ReservationID),
+    FOREIGN KEY (CustomerID)
+        REFERENCES Customer_T (CustomerID));
+
+CREATE TABLE ReservationFlight_T (
+    ReservationID INT,
+    AirlineCode CHAR(3) NOT NULL,
+    FlightNumber INT(4) NOT NULL,
+    FlightDate DATE NOT NULL,
+    Avaliable BOOLEAN,
+    CONSTRAINT ReservationFlight_PK PRIMARY KEY (ReservationID , AirlineCode , FlightNumber , FlightDate),
+    CONSTRAINT FlightInstance_FK FOREIGN KEY (AirlineCode , FlightNumber , FlightDate)
+        REFERENCES FlightInstance_T (AirlineCode , FlightNumber , FlightDate),
+    FOREIGN KEY (ReservationID)
+        REFERENCES Reservation_T (ReservationID));
+
+insert into Airport_T values ('DFW', 'Dallas Fort Worth Intl', 'Dallas-Fort Worth', 'United States', 1234570533);
+insert into Airport_T values ('LAX', 'Los Angeles Intl', 'Los Angeles', 'United States', 1234570349);
+insert into Airport_T values ('XAU',  'Saul Airport',  'Saul',  'French Guiana', 1234568061);
+insert into Airport_T values ('VAO',  'Suavanao Airport',  'Suavanao',  'Solomon Islands', 1234568086);
+insert into Airport_T values ('LKN',  'Leknes Airport',  'Leknes',  'Norway', 1234568078);
+insert into Airport_T values ('PEM',  'Padre Aldamiz',  'Puerto Maldonado',  'Peru', 1234567987);
+insert into Airport_T values ('PSL',  'Perth Scone Airport',  'Perth',  'United Kingdom', 1234568168);
+insert into Airport_T values ('MWF',  'Naone Airport',  'Maewo Island',  'Vanuatu', 1234568062);
+insert into Airport_T values ('SUG',  'Surigao Airport',  'Sangley Point',  'Philippines', 1234568089);
+insert into Airport_T values ('AHO',  'Alghero',  'Alghero',  'Italy', 1234567944);
+insert into AirlineCarrier_T values ('Star1 Airlines', '', '5648 Riverway Drive', 'Made Up City', 'Lithuania', 1234569570, 'HCW');
+insert into AirlineCarrier_T values ('Fika Salaama Airlines', 'SALAAMA', '1498 ComputerMonitor Court', 'Made Up City', 'Uganda', 1234568767, 'HGK');
+insert into AirlineCarrier_T values ('V Bird Airlines Netherlands', 'VEEBEE', '6028 Desk Avenue', 'Made Up City', 'Netherlands', 1234569490, 'VBA');
+insert into AirlineCarrier_T values ('Saratov Aviation Division', 'SARATOV AIR', '6312 Wire Drive', 'Made Up City', 'Russia', 1234569372, 'SOV');
+insert into AirlineCarrier_T values ('Ariana Afghan Airlines', 'ARIANA', '3366 ComputerMonitor Court', 'Made Up City', 'Afghanistan', 1234568215, 'AFG');
+insert into AirlineCarrier_T values ('S7 Airlines', 'SIBERIAN AIRLINES', '7807 Desk Avenue', 'Made Up City', 'Russia', 1234569256, 'SBI');
+insert into AirlineCarrier_T values ('Air Logistics', 'AIRLOG', '4583 Wire Drive', 'Made Up City', 'United States', 1234568253, 'ALG');
+insert into AirlineCarrier_T values ('Air Bravo', 'AIR BRAVO', '7362 Riverway Drive', 'Made Up City', 'Uganda', 1234568217, 'BRF');
+insert into AirlineCarrier_T values ('Aerotransporte Petrolero', 'AEROPETRO', '7997 Squirrel Boulevard', 'Made Up City', 'Colombia', 1234568280, 'PET');
+insert into AirlineCarrier_T values ('Voyager Airlines', 'VOYAGER AIR', '231 Squirrel Boulevard', 'Made Up City', 'Bangladesh', 1234569507, 'VOG');
+insert into Customer_T values (1, 'Rodina', '8654 Hampson Street',  'Hobbs',  'United States', 1234569669);
+insert into Customer_T values (2, 'Roanne', '3364 Techeview Drive',  'Touho',  'New Caledonia', 1234569670);
+insert into Customer_T values (3, 'Cynthie', '9197 Wire Drive',  'Ciego De Avila',  'Cuba', 1234569671);
+insert into Customer_T values (4, 'Cele', '6792 Riverway Drive',  'Roxana',  'Costa Rica', 1234569672);
+insert into Customer_T values (5, 'Keslie', '2046 Hampson Street',  'Rasht',  'Iran', 1234569673);
+insert into Customer_T values (6, 'Kippy', '9630 Squirrel Boulevard',  'Beziers',  'France', 1234569674);
+insert into Customer_T values (7, 'Eloisa', '9800 Mulberry Street',  'Daloa',  'Cote d Ivoire', 1234569675);
+insert into Customer_T values (8, 'Eyde', '7516 Hampson Street',  'Kratie',  'Cambodia', 1234569676);
+insert into Customer_T values (9, 'Reyna', '4705 Treadmill Lane',  'Ustupo',  'Panama', 1234569677);
+insert into Customer_T values (10, 'Jehanna', '2665 Desk Avenue',  'Suavanao',  'Solomon Islands', 1234569678);
+insert into Plane_T values ('KD1370', 'Airbus', 'Jet', 19, 144);
+insert into Plane_T values ('MQ2449', 'Boeing 787', 'Jet', 26, 175);
+insert into Plane_T values ('RR9108', 'Boeing 797', 'Jet', 16, 124);
+insert into Plane_T values ('GR4450', 'KingAir', 'Jet', 22, 197);
+insert into Plane_T values ('LE6412', 'Concord', 'Jet', 26, 178);
+insert into Plane_T values ('HC2396', 'Concord', 'Jet', 22, 203);
+insert into Plane_T values ('YZ4661', 'Boeing 757', 'Jet', 27, 108);
+insert into Plane_T values ('DJ1753', 'Boeing 777', 'Jet', 10, 169);
+insert into Plane_T values ('SZ6013', 'Boeing 777', 'Jet', 18, 192);
+insert into Plane_T values ('VZ9902', 'Gulfstream 650', 'Jet', 27, 179);
+insert into Plane_T values ('UE9150', 'TonyStarksPlane', 'Jet', 28, 194);
+insert into Plane_T values ('MR2640', 'Boeing 737', 'Jet', 27, 154);
+insert into Plane_T values ('IZ1972', 'Boeing 737', 'Jet', 12, 205);
+insert into Plane_T values ('XA783', 'Gulfstream 650', 'Jet', 10, 214);
+insert into Plane_T values ('GV2728', 'Boeing 777', 'Jet', 21, 174);
+insert into Plane_T values ('ZJ9619', 'Boeing 777', 'Jet', 22, 126);
+insert into Plane_T values ('VL8195', 'Boeing 747', 'Jet', 13, 189);
+insert into Plane_T values ('TN1752', 'Boeing 737', 'Jet', 13, 198);
+insert into Plane_T values ('CI1098', 'TonyStarksPlane', 'Jet', 11, 129);
+insert into Plane_T values ('WF1224', 'Boeing 767', 'Jet', 16, 147);
+insert into Plane_T values ('IQ2858', 'Boeing 777', 'Jet', 14, 207);
+insert into Plane_T values ('LO5818', 'Boeing 737', 'Jet', 29, 196);
+insert into Plane_T values ('IU2809', 'Boeing 767', 'Jet', 17, 175);
+insert into Plane_T values ('WH6614', 'Boeing 737', 'Jet', 22, 127);
+insert into Plane_T values ('TC497', 'Boeing 757', 'Jet', 17, 187);
+insert into Plane_T values ('UC2471', 'Boeing 767', 'Jet', 21, 198);
+insert into Plane_T values ('QQ8970', 'Gulfstream 650', 'Jet', 14, 205);
+insert into Plane_T values ('XJ2507', 'Gulfstream 650', 'Jet', 16, 190);
+insert into Plane_T values ('RP9632', 'Boeing 787', 'Jet', 17, 109);
+insert into Plane_T values ('DQ2484', 'Boeing 797', 'Jet', 17, 187);
+insert into Plane_T values ('PY2555', 'Boeing 747', 'Jet', 23, 212);
+insert into Plane_T values ('II8696', 'Boeing 767', 'Jet', 15, 107);
+insert into Plane_T values ('GJ7489', 'Boeing 787', 'Jet', 23, 167);
+insert into Plane_T values ('KH6836', 'Boeing 757', 'Jet', 13, 156);
+insert into Plane_T values ('GN8940', 'Boeing 757', 'Jet', 19, 163);
+insert into Plane_T values ('RB9761', 'Airbus', 'Jet', 20, 204);
+insert into Plane_T values ('TZ121', 'Concord', 'Jet', 24, 121);
+insert into Plane_T values ('MW9499', 'Boeing 787', 'Jet', 24, 172);
+insert into Plane_T values ('AQ8968', 'Boeing 787', 'Jet', 19, 119);
+insert into Plane_T values ('SH8708', 'Boeing 737', 'Jet', 12, 153);
+insert into Plane_T values ('MT1625', 'Concord', 'Jet', 25, 155);
+insert into Plane_T values ('VN9868', 'Airbus', 'Jet', 22, 160);
+insert into Plane_T values ('MI1177', 'Boeing 797', 'Jet', 15, 140);
+insert into Plane_T values ('FH4486', 'Airbus', 'Jet', 22, 171);
+insert into Plane_T values ('LV4652', 'SeaPlane', 'Jet', 19, 151);
+insert into Plane_T values ('YC421', 'Boeing 747', 'Jet', 19, 190);
+insert into Plane_T values ('YH7008', 'Boeing 757', 'Jet', 28, 212);
+insert into Plane_T values ('DB410', 'Concord', 'Jet', 16, 176);
+insert into Plane_T values ('NH4784', 'Boeing 787', 'Jet', 12, 179);
+insert into Plane_T values ('OT6908', 'Boeing 747', 'Jet', 14, 208);
+insert into Plane_T values ('UQ4417', 'Boeing 777', 'Jet', 23, 198);
+insert into Plane_T values ('GC231', 'Boeing 747', 'Jet', 27, 117);
+insert into Plane_T values ('UZ7646', 'Boeing 747', 'Jet', 21, 131);
+insert into Plane_T values ('VA3152', 'Boeing 737', 'Jet', 15, 216);
+insert into Plane_T values ('QD6333', 'Boeing 757', 'Jet', 21, 110);
+insert into Plane_T values ('SQ3368', 'Citation Ultra', 'Jet', 27, 129);
+insert into Plane_T values ('RY7152', 'Boeing 777', 'Jet', 18, 186);
+insert into Plane_T values ('IG9893', 'Boeing 737', 'Jet', 26, 212);
+insert into Plane_T values ('DY769', 'Airbus', 'Jet', 26, 114);
+insert into Plane_T values ('WJ2655', 'SeaPlane', 'Jet', 28, 119);
+insert into Plane_T values ('VQ8335', 'SeaPlane', 'Jet', 18, 153);
+insert into Plane_T values ('RW3564', 'Boeing 757', 'Jet', 22, 122);
+insert into Plane_T values ('UL8651', 'Citation Ultra', 'Jet', 18, 138);
+insert into Plane_T values ('FO4734', 'Airbus', 'Jet', 25, 138);
+insert into Plane_T values ('MZ6426', 'KingAir', 'Jet', 20, 156);
+insert into Plane_T values ('EG2605', 'Concord', 'Jet', 20, 211);
+insert into Plane_T values ('OX2863', 'TonyStarksPlane', 'Jet', 21, 174);
+insert into Plane_T values ('TK7343', 'Airbus', 'Jet', 12, 178);
+insert into Plane_T values ('PA3421', 'Citation Ultra', 'Jet', 12, 203);
+insert into Plane_T values ('AR6719', 'Boeing 787', 'Jet', 22, 131);
+insert into Plane_T values ('GB24', 'TonyStarksPlane', 'Jet', 19, 210);
+insert into Plane_T values ('SB8706', 'Boeing 787', 'Jet', 16, 108);
+insert into Plane_T values ('OY1392', 'Citation Ultra', 'Jet', 24, 165);
+insert into Plane_T values ('OP4401', 'TonyStarksPlane', 'Jet', 13, 190);
+insert into Plane_T values ('OS9503', 'Concord', 'Jet', 21, 131);
+insert into Plane_T values ('OX8383', 'Airbus', 'Jet', 27, 172);
+insert into Plane_T values ('YQ9493', 'Boeing 767', 'Jet', 12, 141);
+insert into Plane_T values ('AW7006', 'SeaPlane', 'Jet', 28, 155);
+insert into Plane_T values ('ID6147', 'Boeing 787', 'Jet', 10, 162);
+insert into Plane_T values ('NA7329', 'Boeing 797', 'Jet', 21, 166);
+insert into Plane_T values ('UO3156', 'KingAir', 'Jet', 28, 183);
+insert into Plane_T values ('UT1775', 'Boeing 777', 'Jet', 27, 179);
+insert into Plane_T values ('VH2795', 'Boeing 787', 'Jet', 11, 119);
+insert into Plane_T values ('GU2189', 'TonyStarksPlane', 'Jet', 28, 110);
+insert into Plane_T values ('PR856', 'SeaPlane', 'Jet', 21, 154);
+insert into Plane_T values ('BX7253', 'TonyStarksPlane', 'Jet', 29, 154);
+insert into Plane_T values ('OK6823', 'Citation Ultra', 'Jet', 12, 158);
+insert into Plane_T values ('ZY7885', 'Boeing 777', 'Jet', 14, 206);
+insert into Plane_T values ('UF9884', 'SeaPlane', 'Jet', 24, 175);
+insert into Plane_T values ('VW6436', 'Boeing 787', 'Jet', 15, 219);
+insert into Plane_T values ('ZK8872', 'Citation Ultra', 'Jet', 14, 196);
+insert into Plane_T values ('DS2987', 'Boeing 767', 'Jet', 27, 207);
+insert into Plane_T values ('NN9818', 'Boeing 777', 'Jet', 27, 199);
+insert into Plane_T values ('CR9397', 'Boeing 737', 'Jet', 20, 126);
+insert into Plane_T values ('YL8934', 'Boeing 737', 'Jet', 23, 121);
+insert into Plane_T values ('XS829', 'SeaPlane', 'Jet', 20, 198);
+insert into Plane_T values ('KM3858', 'KingAir', 'Jet', 22, 136);
+insert into Plane_T values ('GP9053', 'Boeing 787', 'Jet', 23, 188);
+insert into Plane_T values ('YS8652', 'Boeing 787', 'Jet', 22, 133);
+insert into Plane_T values ('JP6795', 'Citation Ultra', 'Jet', 22, 103);
+insert into FlightPath_T values ('HCW', 28, 'DFW', 'LAX');
+insert into FlightInstance_T values ('HCW', 28, 'FO4734', '20061231', '20:30:00', '10:38:00', 2269, 305, 0, 24);
+insert into FlightPath_T values ('HGK', 322, 'DFW', 'LAX');
+insert into FlightInstance_T values ('HGK', 322, 'PA3421', '20061231', '6:2:00', '11:8:00', 2354, 368, 1, 25);
+insert into FlightPath_T values ('VBA', 419, 'DFW', 'LAX');
+insert into FlightInstance_T values ('VBA', 419, 'IQ2858', '20061231', '16:39:00', '2:44:00', 2433, 442, 7, 48);
+insert into FlightPath_T values ('SOV', 975, 'DFW', 'XAU');
+insert into FlightInstance_T values ('SOV', 975, 'UT1775', '20061231', '7:6:00', '16:42:00', 2379, 566, 3, 23);
+insert into FlightPath_T values ('AFG', 947, 'DFW', 'VAO');
+insert into FlightInstance_T values ('AFG', 947, 'ZJ9619', '20061231', '20:23:00', '10:51:00', 2214, 439, 6, 73);
+insert into FlightPath_T values ('SBI', 929, 'DFW', 'LKN');
+insert into FlightInstance_T values ('SBI', 929, 'IQ2858', '20061231', '12:51:00', '13:17:00', 2154, 381, 7, 4);
+insert into FlightPath_T values ('ALG', 926, 'DFW', 'PEM');
+insert into FlightInstance_T values ('ALG', 926, 'WJ2655', '20061231', '2:34:00', '15:5:00', 2035, 372, 9, 18);
+insert into FlightPath_T values ('BRF', 234, 'DFW', 'PSL');
+insert into FlightInstance_T values ('BRF', 234, 'MI1177', '20061231', '10:51:00', '19:26:00', 2252, 539, 7, 76);
+insert into FlightPath_T values ('PET', 308, 'DFW', 'MWF');
+insert into FlightInstance_T values ('PET', 308, 'TC497', '20061231', '4:21:00', '22:9:00', 2458, 479, 6, 96);
+insert into FlightPath_T values ('VOG', 326, 'DFW', 'SUG');
+insert into FlightInstance_T values ('VOG', 326, 'KH6836', '20061231', '22:35:00', '13:23:00', 2420, 552, 8, 22);
+insert into FrequentFlyerMembership_T values (7, 'VBA', 462280);
+insert into FrequentFlyerMembership_T values (7, 'HCW', 4114381);
+insert into FrequentFlyerMembership_T values (9, 'SOV', 5407218);
+insert into PaymentMethod_T values (1, 'Credit Card', 1104169542076985);
+insert into PaymentMethod_T values (2, 'Credit Card', 5210732762036505);
+insert into PaymentMethod_T values (3, 'Credit Card', 6726427685089244);
+insert into PaymentMethod_T values (4, 'Credit Card', 5642069284483777);
+insert into PaymentMethod_T values (5, 'Credit Card', 3913024112357869);
+insert into PaymentMethod_T values (6, 'Credit Card', 1341887360657846);
+insert into PaymentMethod_T values (7, 'Credit Card', 3505560429000292);
+insert into PaymentMethod_T values (8, 'Credit Card', 1419836137911081);
+insert into PaymentMethod_T values (9, 'Credit Card', 8244368559179761);
+insert into PaymentMethod_T values (10, 'Credit Card', 9090007023000017);
+insert into Preference_T values (1, 'Window Seat', 'No Details' );
+insert into Preference_T values (6, 'Window Seat', 'No Details' );
+insert into Reservation_T(ReservationID, CustomerID, PaymentMethod, Preference, TravelAgent, Confirmed) values (1, 1, 'Credit Card', 'Window Seat', 'Michaeline', FALSE);
+insert into ReservationFlight_T values (1, 'HGK', 322,'20061231', FALSE);
+insert into Reservation_T(ReservationID, CustomerID, PaymentMethod, Preference, TravelAgent, Confirmed) values (2, 2, 'Credit Card', 'Window Seat', 'Cinnamon', FALSE);
+insert into ReservationFlight_T values (2, 'HCW', 28,'20061231', FALSE);
+insert into Reservation_T(ReservationID, CustomerID, PaymentMethod, Preference, TravelAgent, Confirmed) values (3, 3, 'Credit Card', 'Window Seat', 'Michel', FALSE);
+insert into ReservationFlight_T values (3, 'VBA', 419,'20061231', FALSE);
+insert into Reservation_T(ReservationID, CustomerID, PaymentMethod, Preference, TravelAgent, Confirmed) values (4, 4, 'Credit Card', 'Window Seat', 'Micky', FALSE);
+insert into ReservationFlight_T values (4, 'SOV', 975,'20061231', FALSE);
+insert into Reservation_T(ReservationID, CustomerID, PaymentMethod, Preference, TravelAgent, Confirmed) values (5, 5, 'Credit Card', 'Window Seat', 'Michel', FALSE);
+insert into ReservationFlight_T values (5, 'AFG', 947,'20061231', FALSE);
+insert into Reservation_T(ReservationID, CustomerID, PaymentMethod, Preference, TravelAgent, Confirmed) values (6, 6, 'Credit Card', 'Window Seat', 'Charleen', FALSE);
+insert into ReservationFlight_T values (6, 'SBI', 929,'20061231', FALSE);
+insert into Reservation_T(ReservationID, CustomerID, PaymentMethod, Preference, TravelAgent, Confirmed) values (7, 7, 'Credit Card', 'Window Seat', 'Kara-Lynn', FALSE);
+insert into ReservationFlight_T values (7, 'ALG', 926,'20061231', FALSE);
+insert into Reservation_T(ReservationID, CustomerID, PaymentMethod, Preference, TravelAgent, Confirmed) values (8, 8, 'Credit Card', 'Window Seat', 'Page', FALSE);
+insert into ReservationFlight_T values (8, 'BRF', 234,'20061231', FALSE);
+insert into Reservation_T(ReservationID, CustomerID, PaymentMethod, Preference, TravelAgent, Confirmed) values (9, 9, 'Credit Card', 'Window Seat', 'Issi', FALSE);
+insert into ReservationFlight_T values (9, 'PET', 308,'20061231', FALSE);
+insert into Reservation_T(ReservationID, CustomerID, PaymentMethod, Preference, TravelAgent, Confirmed) values (10, 10, 'Credit Card', 'Window Seat', 'Micky', FALSE);
+insert into ReservationFlight_T values (10, 'VOG', 326,'20061231', FALSE);
+
+SELECT 
+    *
+FROM
+    FlightPath_T
+ORDER BY AirlineCode , FlightNumber;
+
+SELECT 
+    FI.AirlineCode,
+    FI.FlightNumber,
+    FI.DepartTime,
+    FI.ArriveTime
+FROM
+    FlightInstance_T FI,
+    FlightPath_T FP
+WHERE
+    FI.AirlineCode = FP.AirlineCode
+        AND FI.FlightNumber = FP.FlightNumber
+        AND FP.DepartAirport = 'DFW'
+        AND FP.ArriveAirport = 'LAX'
+        AND FI.FlightDate = '20061231';
+
+SELECT 
+    A.AirlineName, COUNT(B.AirlineCode) AS '# from DFW'
+FROM
+    AirlineCarrier_T A,
+    (SELECT 
+        FI.AirlineCode
+    FROM
+        FlightInstance_T FI, FlightPath_T FP
+    WHERE
+        FI.AirlineCode = FP.AirlineCode
+            AND FI.FlightNumber = FP.FlightNumber
+            AND FP.DepartAirport = 'DFW'
+            AND FI.FlightDate = '20061231') B
+WHERE
+    A.AirlineCode = B.AirlineCode
+GROUP BY A.AirlineName;
+
+SELECT 
+    A.AirportName AS 'Departing Airport',
+    AC.AirlineName,
+    COUNT(AC.AirlineCode) AS '# of Flights',
+    AVG(FI.TicketPriceEcon) AS 'AVG TicketPrice'
+FROM
+    AirlineCarrier_T AC,
+    FlightInstance_T FI,
+    FlightPath_T FP,
+    Airport_T A
+WHERE
+    AC.AirlineCode = FI.AirlineCode
+        AND FI.AirlineCode = FP.AirlineCode
+        AND FI.FlightNumber = FP.FlightNumber
+        AND A.AirportCode = FP.DepartAirport
+GROUP BY FP.DepartAirport , AC.AirlineName
+ORDER BY A.AirportName , AC.AirlineName;
+
+SELECT 
+    AirlineCode, FlightNumber, FlightDate
+FROM
+    (FlightInstance_T FI
+    NATURAL JOIN (FlightPath_T FP)),
+    Plane_T P
+WHERE
+    DepartAirport = 'DFW'
+        AND ArriveAirport = 'LAX'
+        AND ticketPriceEcon < 500
+        AND P.TailNumber = PlaneID
+        AND ReservedEconomySeats < EconomySeats;
+
+SELECT 
+    AirlineCode,
+    FlightNumber,
+    FlightDate,
+    EconomySeats - ReservedEconomySeats AS 'AvailableSeats',
+    ticketPriceEcon AS 'Ticket Price'
+FROM
+    (FlightInstance_T FI
+    NATURAL JOIN (FlightPath_T FP)),
+    Plane_T P
+WHERE
+    DepartAirport = 'DFW'
+        AND ArriveAirport = 'LAX'
+        AND ticketPriceEcon < 500
+        AND P.TailNumber = PlaneID
+        AND ReservedEconomySeats < EconomySeats;
